@@ -1,0 +1,245 @@
+from flask import Flask, render_template, request, redirect, session, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
+from pydub import AudioSegment
+import os
+
+app = Flask(__name__)
+app.secret_key = "clave_secreta"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///usuarios.db'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+db = SQLAlchemy(app)
+
+# MODELOS
+class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    es_admin = db.Column(db.Boolean, default=False)
+
+class Efecto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(100), nullable=False)
+    duracion = db.Column(db.Float)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    estado_venta = db.Column(db.String(20), default="aprobado")
+    precio = db.Column(db.Float, default=2.0)
+
+class Compra(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    efecto_id = db.Column(db.Integer, db.ForeignKey('efecto.id'))
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+    comprobante = db.Column(db.String(200))
+    estado_pago = db.Column(db.String(20), default="pendiente")
+
+    comprador = db.relationship("Usuario", backref="compras")
+    efecto = db.relationship("Efecto", backref="ventas")
+
+# RUTAS PRINCIPALES
+@app.route("/")
+def inicio():
+    efectos = Efecto.query.filter_by(estado_venta="aprobado").all()
+    return render_template("index.html", efectos=efectos, now=datetime.now)
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        email = request.form['email']
+        password = generate_password_hash(request.form['password'])
+        if Usuario.query.filter_by(email=email).first():
+            return "Usuario ya existe"
+        nuevo = Usuario(email=email, password=password)
+        db.session.add(nuevo)
+        db.session.commit()
+        return redirect("/login")
+    return render_template("register.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+        usuario = Usuario.query.filter_by(email=email).first()
+        if usuario and check_password_hash(usuario.password, password):
+            session['usuario_id'] = usuario.id
+            return redirect("/dashboard")
+        return "Credenciales incorrectas"
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.pop('usuario_id', None)
+    return redirect("/")
+
+@app.route("/dashboard")
+def dashboard():
+    if 'usuario_id' not in session:
+        return redirect("/login")
+    usuario = Usuario.query.get(session['usuario_id'])
+    efectos = Efecto.query.filter_by(usuario_id=usuario.id).all()
+    return render_template("dashboard.html", usuario=usuario, efectos=efectos)
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    if 'usuario_id' not in session:
+        return redirect("/login")
+    file = request.files['file']
+    if file:
+        filename = secure_filename(file.filename)
+        ruta = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(ruta)
+        audio = AudioSegment.from_file(ruta)
+        duracion = round(len(audio) / 1000, 2)
+        nuevo_efecto = Efecto(filename=filename, duracion=duracion, usuario_id=session['usuario_id'])
+        db.session.add(nuevo_efecto)
+        db.session.commit()
+    return redirect("/dashboard")
+
+@app.route("/preview/<int:efecto_id>")
+def preview(efecto_id):
+    efecto = Efecto.query.get_or_404(efecto_id)
+
+    if efecto.filename.startswith("preview_"):
+        return "No se puede generar preview de un preview."
+
+    ruta = os.path.join(app.config['UPLOAD_FOLDER'], efecto.filename)
+
+    if not os.path.exists(ruta):
+        return "Archivo original no encontrado."
+
+    try:
+        audio = AudioSegment.from_file(ruta)
+        preview_audio = audio[:5000]
+        preview_filename = f"preview_{efecto.filename}"
+        preview_path = os.path.join(app.config['UPLOAD_FOLDER'], preview_filename)
+
+        if not os.path.exists(preview_path):
+            preview_audio.export(preview_path, format="mp3")
+
+        return send_from_directory(app.config['UPLOAD_FOLDER'], preview_filename, as_attachment=False)
+
+    except Exception as e:
+        return f"Error generando preview: {str(e)}"
+
+@app.route("/download/<int:efecto_id>")
+def download(efecto_id):
+    if 'usuario_id' not in session:
+        return redirect("/login")
+    efecto = Efecto.query.get_or_404(efecto_id)
+    compra = Compra.query.filter_by(usuario_id=session['usuario_id'], efecto_id=efecto_id, estado_pago="aprobado").first()
+    if not compra:
+        return "Debes comprar este efecto para descargarlo."
+    return send_from_directory(app.config['UPLOAD_FOLDER'], efecto.filename, as_attachment=True)
+
+@app.route("/comprar/<int:efecto_id>")
+def comprar(efecto_id):
+    if 'usuario_id' not in session:
+        return redirect("/login")
+    existente = Compra.query.filter_by(usuario_id=session['usuario_id'], efecto_id=efecto_id).first()
+    if not existente:
+        compra = Compra(usuario_id=session['usuario_id'], efecto_id=efecto_id)
+        db.session.add(compra)
+        db.session.commit()
+    return redirect(f"/pago/{efecto_id}")
+
+@app.route("/pago/<int:efecto_id>", methods=["GET", "POST"])
+def pago(efecto_id):
+    if "usuario_id" not in session:
+        return redirect("/login")
+
+    usuario_id = session["usuario_id"]
+    efecto = Efecto.query.get_or_404(efecto_id)
+    compra = Compra.query.filter_by(usuario_id=usuario_id, efecto_id=efecto_id).first()
+
+    if not compra:
+        return "Compra no encontrada", 404
+
+    if request.method == "POST":
+        file = request.files.get("comprobante")
+        if file:
+            nombre_archivo = secure_filename(file.filename)
+            ruta = os.path.join(app.config["UPLOAD_FOLDER"], nombre_archivo)
+            file.save(ruta)
+            compra.comprobante = nombre_archivo
+            compra.estado_pago = "pendiente"
+            db.session.commit()
+            return redirect("/dashboard")
+
+    return render_template("pago.html", efecto=efecto, compra=compra)
+
+@app.route("/admin/resumen")
+def resumen_admin():
+    if "usuario_id" not in session:
+        return redirect("/login")
+    usuario = Usuario.query.get(session["usuario_id"])
+    if not usuario or not usuario.es_admin:
+        return "Acceso no autorizado", 403
+    efectos_subidos = Efecto.query.filter_by(usuario_id=usuario.id).all()
+    total_efectos = len(efectos_subidos)
+    compras = Compra.query.join(Efecto).filter(Efecto.usuario_id == usuario.id, Compra.estado_pago=="aprobado").all()
+    total_vendidos = len(compras)
+    total_recaudado = sum(c.efecto.precio for c in compras)
+    comision = round(total_recaudado * 0.10, 2)
+    ganancia_neta = round(total_recaudado - comision, 2)
+    return render_template("resumen_admin.html",
+                           total_efectos=total_efectos,
+                           total_vendidos=total_vendidos,
+                           total_recaudado=total_recaudado,
+                           comision=comision,
+                           ganancia_neta=ganancia_neta,
+                           compras=compras)
+
+@app.route("/admin/revisar_pagos", methods=["GET", "POST"])
+def revisar_pagos():
+    if "usuario_id" not in session:
+        return redirect("/login")
+    usuario = Usuario.query.get(session["usuario_id"])
+    if not usuario or not usuario.es_admin:
+        return "Acceso no autorizado", 403
+
+    if request.method == "POST":
+        compra_id = request.form.get("compra_id")
+        accion = request.form.get("accion")
+        compra = Compra.query.get(compra_id)
+        if compra:
+            if accion == "aprobar":
+                compra.estado_pago = "aprobado"
+            elif accion == "rechazar":
+                compra.estado_pago = "rechazado"
+            db.session.commit()
+        return redirect("/admin/revisar_pagos")
+
+    compras = Compra.query.filter(Compra.comprobante != None).order_by(Compra.fecha.desc()).all()
+    return render_template("revisar_pagos.html", compras=compras)
+
+# INICIO DEL SERVIDOR Y SETUP INICIAL
+if __name__ == "__main__":
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    with app.app_context():
+        db.create_all()
+
+        # Crear admin si no existe
+        if not Usuario.query.filter_by(email='admin@audio.com').first():
+            admin = Usuario(email='admin@audio.com', password=generate_password_hash('admin123'), es_admin=True)
+            db.session.add(admin)
+            db.session.commit()
+
+        # Recargar audios del folder "uploads" como efectos del admin si no están en BD
+        admin = Usuario.query.filter_by(email='admin@audio.com').first()
+        for archivo in os.listdir(app.config['UPLOAD_FOLDER']):
+            if archivo.endswith(".mp3") or archivo.endswith(".wav"):
+                if archivo.startswith("preview_"):
+                    continue
+                ya_existe = Efecto.query.filter_by(filename=archivo).first()
+                if not ya_existe:
+                    ruta = os.path.join(app.config['UPLOAD_FOLDER'], archivo)
+                    audio = AudioSegment.from_file(ruta)
+                    duracion = round(len(audio) / 1000, 2)
+                    efecto = Efecto(filename=archivo, duracion=duracion, usuario_id=admin.id, estado_venta="aprobado", precio=2.0)
+                    db.session.add(efecto)
+        db.session.commit()
+
+    app.run(debug=True)
