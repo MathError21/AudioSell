@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Revisión de Efectos</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f2f2f2; }
+        h2 { color: #2c3e50; }
+        .efecto { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        a.btn { padding: 8px 12px; margin-right: 10px; background: #3498db; color: white; text-decoration: none; border-radius: 4px; }
+        a.btn.rechazar { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <h2>Panel de Revisión de Efectos</h2>
+
+    {% for efecto in pendientes %}
+        <div class="efecto">
+            <strong>{{ efecto.filename }}</strong><br>
+            Usuario ID: {{ efecto.usuario_id }}<br>
+            Duración: {{ efecto.duracion }} seg<br>
+            Precio: ${{ efecto.precio }}<br>
+            <audio controls src="/preview/{{ efecto.id }}"></audio><br><br>
+
+            <a class="btn" href="/admin/aprobar/{{ efecto.id }}">Aprobar</a>
+            <a class="btn rechazar" href="/admin/rechazar/{{ efecto.id }}">Rechazar</a>
+        </div>
+    {% else %}
+        <p>No hay efectos pendientes.</p>
+    {% endfor %}
+</body>
+</html>
