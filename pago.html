@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Pago de Efecto</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+
+  <h2 class="mb-4">💳 Pagar Efecto: {{ efecto.filename }}</h2>
+  <p><strong>Precio:</strong> ${{ efecto.precio }}</p>
+
+  <div class="mb-4">
+    <h4>Opción 1: Pagar con PayPal</h4>
+    <a href="https://www.paypal.com" target="_blank" class="btn btn-primary">
+      Ir a PayPal (simulado)
+    </a>
+    <p class="mt-2 text-muted">Después del pago, por favor sube el comprobante con la opción de Nequi o contáctanos.</p>
+  </div>
+
+  <div class="mb-5">
+    <h4>Opción 2: Pagar con Nequi</h4>
+    <p>Envía el valor a <strong>Nequi: 320 XXX XXXX</strong> y sube el comprobante aquí:</p>
+
+    <form method="POST" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="comprobante" class="form-label">Subir comprobante:</label>
+        <input type="file" class="form-control" name="comprobante" required>
+      </div>
+      <button type="submit" class="btn btn-success">Enviar comprobante</button>
+      <a href="/dashboard" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+
+</body>
+</html>
