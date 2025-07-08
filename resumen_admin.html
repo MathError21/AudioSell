@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Resumen de Ventas</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 40px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .resumen {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .metricas {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+    .bloque {
+      width: 48%;
+      margin-bottom: 20px;
+      background-color: #ecf0f1;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .bloque h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: #2980b9;
+    }
+    .bloque p {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    .volver {
+      display: block;
+      margin: 30px auto 0;
+      text-align: center;
+      text-decoration: none;
+      color: #3498db;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Resumen de Ventas del Administrador</h1>
+
+  <div class="resumen">
+    <div class="metricas">
+      <div class="bloque">
+        <h3>Efectos subidos</h3>
+        <p>{{ total_efectos }}</p>
+      </div>
+      <div class="bloque">
+        <h3>Efectos vendidos</h3>
+        <p>{{ total_vendidos }}</p>
+      </div>
+      <div class="bloque">
+        <h3>Total recaudado</h3>
+        <p>$ {{ "%.2f"|format(total_recaudado) }}</p>
+      </div>
+      <div class="bloque">
+        <h3>Comisión (10%)</h3>
+        <p>$ {{ "%.2f"|format(comision) }}</p>
+      </div>
+      <div class="bloque" style="width: 100%;">
+        <h3>Ganancia neta</h3>
+        <p style="font-size: 24px; color: #27ae60;">$ {{ "%.2f"|format(ganancia_neta) }}</p>
+      </div>
+    </div>
+
+    <h3>Detalle de compras:</h3>
+    <table>
+      <tr>
+        <th>Archivo</th>
+        <th>Comprador</th>
+        <th>Fecha</th>
+        <th>Precio</th>
+      </tr>
+      {% for c in compras %}
+        <tr>
+          <td>{{ c.efecto.filename }}</td>
+          <td>{{ c.comprador.email }}</td>
+          <td>{{ c.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>$ {{ "%.2f"|format(c.efecto.precio) }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+
+    <a href="/dashboard" class="volver">← Volver al dashboard</a>
+  </div>
+
+</body>
+</html>
