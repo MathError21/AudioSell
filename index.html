@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>🎧 Catálogo de Efectos</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #e6f0ff, #ffffff);
+      padding: 30px;
+      color: #2c3e50;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .auth {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+    .auth a {
+      margin-left: 20px;
+      text-decoration: none;
+      color: #2980b9;
+      font-weight: bold;
+    }
+    .filter {
+      margin: 0 auto 30px auto;
+      text-align: center;
+    }
+    .filter input, .filter select {
+      padding: 8px;
+      margin: 0 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .filter button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    li {
+      background: white;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    audio {
+      width: 100%;
+      margin-top: 10px;
+    }
+    .precio {
+      font-weight: bold;
+      color: #27ae60;
+    }
+    .comprar, .comprado {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .comprar {
+      background-color: #27ae60;
+      color: white;
+    }
+    .comprado {
+      background-color: #bdc3c7;
+      color: #2c3e50;
+      cursor: default;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 14px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth">
+    {% if session.get('usuario_id') %}
+      <a href="/dashboard">Mi cuenta</a>
+      <a href="/logout">Cerrar sesión</a>
+    {% else %}
+      <a href="/login">Iniciar sesión</a>
+      <a href="/register">Registrarse</a>
+    {% endif %}
+  </div>
+
+  <h1>🎧 Catálogo de Efectos de Audio</h1>
+
+  <form method="GET" class="filter">
+    <input type="text" name="nombre" placeholder="Buscar por nombre" value="{{ nombre }}">
+    <select name="tipo">
+      <option value="">Todos</option>
+      <option value="mp3" {% if tipo == 'mp3' %}selected{% endif %}>.mp3</option>
+      <option value="wav" {% if tipo == 'wav' %}selected{% endif %}>.wav</option>
+    </select>
+    <button type="submit">Filtrar</button>
+  </form>
+
+  <ul>
+    {% for efecto in efectos %}
+      <li>
+        <strong>{{ efecto.filename }}</strong><br>
+        <span class="precio">${{ efecto.precio or "0.00" }}</span><br>
+        <audio controls>
+          <source src="/preview/{{ efecto.id }}" type="audio/mpeg">
+        </audio><br>
+        <small>Vista previa (5s). Para descargar, inicia sesión.</small><br>
+
+        {% if session.get('usuario_id') %}
+          {% set ya_comprado = false %}
+          {% for compra in efecto.ventas %}
+            {% if compra.usuario_id == session['usuario_id'] %}
+              {% set ya_comprado = true %}
+            {% endif %}
+          {% endfor %}
+          {% if ya_comprado %}
+            <span class="comprado">✅ Ya comprado</span>
+          {% else %}
+            <a href="/comprar/{{ efecto.id }}" class="comprar">Comprar</a>
+          {% endif %}
+        {% else %}
+          <a href="/login" class="comprar">Inicia sesión para comprar</a>
+        {% endif %}
+      </li>
+    {% else %}
+      <li>No se encontraron efectos.</li>
+    {% endfor %}
+  </ul>
+
+  <div class="footer">
+    &copy; {{ now().year }} AudioFX. Todos los derechos reservados.
+  </div>
+
+</body>
+</html>
