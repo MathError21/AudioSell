@@ -1,0 +1,84 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to bottom, #e6f0ff, #ffffff);
+  margin: 0;
+  padding: 30px;
+  color: #2c3e50;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 2.2rem;
+}
+
+.intro {
+  max-width: 800px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.intro p {
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+.github-link {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 20px;
+  background-color: #2980b9;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.github-link:hover {
+  background-color: #1c6696;
+}
+
+.preview-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.preview-item {
+  background: white;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.preview-item:hover {
+  transform: translateY(-5px);
+}
+
+.preview-item strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+audio {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.precio {
+  font-weight: bold;
+  color: #27ae60;
+  margin-top: 6px;
+  display: inline-block;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 60px;
+  font-size: 14px;
+  color: #999;
+  padding-bottom: 20px;
+}
