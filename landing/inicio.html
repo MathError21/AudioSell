@@ -2,78 +2,29 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🎧 AudioFX – Efectos de Sonido</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #e6f0ff, #ffffff);
-      padding: 30px;
-      color: #2c3e50;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    .intro {
-      max-width: 800px;
-      margin: auto;
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    .intro p {
-      font-size: 1.1rem;
-      color: #555;
-    }
-    .preview-list {
-      max-width: 800px;
-      margin: auto;
-    }
-    .preview-item {
-      background: white;
-      padding: 20px;
-      margin-bottom: 15px;
-      border-radius: 10px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-    }
-    audio {
-      width: 100%;
-      margin-top: 10px;
-    }
-    .precio {
-      font-weight: bold;
-      color: #27ae60;
-    }
-    .github-link {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #2980b9;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-    }
-    .footer {
-      text-align: center;
-      margin-top: 50px;
-      font-size: 14px;
-      color: #999;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 <body>
 
-  <h1>🎧 Catálogo de Efectos de Audio</h1>
+  <header>
+    <h1>🎧 Catálogo de Efectos de Audio</h1>
+  </header>
 
-  <div class="intro">
-    <p>Bienvenido a <strong>AudioFX</strong>, una plataforma desarrollada en Flask para vender efectos de sonido. Los usuarios pueden registrarse, subir efectos, previsualizarlos y comprarlos. Incluye paneles de usuario y administrador, integración con PayPal y Nequi.</p>
+  <section class="intro">
+    <p>
+      Bienvenido a <strong>AudioFX</strong>, una plataforma desarrollada en <strong>Python y Flask</strong> para vender efectos de sonido. Los usuarios pueden registrarse, subir efectos, previsualizarlos y comprarlos. Incluye paneles de usuario y administrador, integración con <strong>PayPal</strong> y <strong>Nequi</strong>.
+    </p>
     <a class="github-link" href="https://github.com/MathError21/AudioSell" target="_blank">
-      🔗 Ver código en GitHub
+      <i class="fab fa-github"></i> Ver código en GitHub
     </a>
-  </div>
+  </section>
 
-  <div class="preview-list">
+  <section class="preview-list">
     <div class="preview-item">
-      <strong>Ambiente Bosque.mp3</strong><br>
+      <strong>🌳 Ambiente Bosque.mp3</strong><br>
       <span class="precio">$2.00</span><br>
       <audio controls>
         <source src="assets/ambiente_bosque.mp3" type="audio/mpeg" />
@@ -82,18 +33,19 @@
     </div>
 
     <div class="preview-item">
-      <strong>Explosión Fuerte.wav</strong><br>
+      <strong>💥 Explosión Fuerte.wav</strong><br>
       <span class="precio">$3.00</span><br>
       <audio controls>
         <source src="assets/explosion_fuerte.wav" type="audio/wav" />
       </audio>
       <small>Vista previa (5 segundos)</small>
     </div>
-  </div>
+  </section>
 
-  <div class="footer">
+  <footer class="footer">
     &copy; 2025 AudioFX. Todos los derechos reservados.
-  </div>
+  </footer>
 
 </body>
 </html>
+
